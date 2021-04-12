@@ -1,7 +1,7 @@
 
 import paho.mqtt.client as mqtt
 
-sensor_data = 'hello again'
+sensor_data = '24.3'
 
 client = mqtt.Client()
 client.connect("mqtt.eclipseprojects.io", 1883, 60)

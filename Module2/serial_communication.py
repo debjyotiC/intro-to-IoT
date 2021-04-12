@@ -14,6 +14,6 @@ for i in range(0, 7):
 
 print(np.average(sensor_data))
 
-values ={"Count": count_arr, "Sensor_data": sensor_data}
+values = {"Count": count_arr, "Sensor_data": sensor_data}
 df_w = pd.DataFrame(values, columns=["Count", "Sensor_data"])
 df_w.to_csv("sensor_data.csv", index=None, header=True)
