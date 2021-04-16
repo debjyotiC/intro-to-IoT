@@ -22,7 +22,7 @@ class ArduinoComm:
         print('\n')
 
     def calculateAverage(self):
-        return np.average(self.sensor_data)
+        return round(np.average(self.sensor_data), 2)
 
     def writeCSV(self, fileName):
         values = {"Count": self.count_arr, "Sensor_data": self.sensor_data}
