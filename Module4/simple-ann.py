@@ -12,7 +12,7 @@ l3 = tf.keras.layers.Dense(units=1)
 
 model = tf.keras.Sequential([l0, l1, l2, l3])
 
-model.compile(loss='mean_squared_error', optimizer=tf.keras.optimizers.Adam(0.1))
+model.compile(loss='mean_squared_error', optimizer=tf.keras.optimizers.Adam(learning_rate=0.1))
 
 history = model.fit(xs, ys, epochs=150, verbose=True)
 

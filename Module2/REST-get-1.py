@@ -1,8 +1,8 @@
 import requests
 from Module2.serial_class import ArduinoComm
 
-url = 'http://192.168.0.107:5000/update?api_key=5HPX7SD7SCNT10MP&'
-
+# url = 'http://192.168.0.107:5000/update?api_key=5HPX7SD7SCNT10MP&'
+url = ''
 update = {'field': 45.9}  # payload
 response = requests.get(url, data=update)
 print(response)
