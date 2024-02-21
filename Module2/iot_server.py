@@ -1,43 +1,65 @@
-from flask import Flask
-from flask_restful import reqparse
-import datetime
-import pymongo
+from flask import Flask, request, render_template, jsonify
+from datetime import datetime
+from pymongo import MongoClient
 
+client = MongoClient("mongodb://localhost:27017")
 app = Flask(__name__)
 
-# MongoDB stuff
-mongo_clinet = pymongo.MongoClient("mongodb://localhost:27017/")
-db_connect = mongo_clinet["iot_server"]  # database name
-db_collection = db_connect["sensor_data"]  # collection name
+database = client['data-server']
+collection = database['sensor-data']
 
 
-# REST API to get sensor data
-@app.route('/update', methods=['GET'])
+def get_latest_sensor_data(query):
+    # Query MongoDB for the latest sensor data matching the query
+    # and return it as a dictionary
+    return collection.find_one(query, sort=[('date', -1)])
+
+
+@app.route("/")
+def index():
+    return render_template('index.html')
+
+
+@app.route("/update", methods=['POST'])
 def update():
-    parser = reqparse.RequestParser()
+    data = request.json
+    if data is None:
+        return jsonify({"Response": "Provide JSON file"}), 400
 
-    parser.add_argument('api_key', type=str)
-    parser.add_argument('field', type=float)
+    sensor_data = data.get("data")
+    sensor_key = data.get("key")
+    if sensor_data is None and sensor_key is None:
+        return jsonify({"Response": "Invalid sensor data and key"}), 400
+    data_packet = {
+        "data": sensor_data,
+        "key": sensor_key,
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
 
-    sensor_data = parser.parse_args()
-    sensor_data['date'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    collection.insert_one(data_packet)
 
-    db_collection.insert_one(sensor_data)  # store sensor data on MongoDB
-    return '200 OK'
+    return jsonify({"Response": "Data saved"}), 200
 
 
-# REST API to show sensor data
-@app.route('/feeds.json', methods=['GET'])
+@app.route('/feeds', methods=['GET'])
 def feeds():
-    parser = reqparse.RequestParser()
-    parser.add_argument('api_key', type=str)
+    key = request.args.get('key')
 
-    api_key_given = parser.parse_args()
-    db_reply = [i for i in db_collection.find(api_key_given)][-1]
-    reply = {"Data": db_reply['field'], "Date": db_reply['date']}
+    # Ensure key is provided
+    if key is None:
+        return jsonify({"error": "Missing key parameter"}), 400
 
-    return reply
+    # Query MongoDB for the latest sensor data with the given key
+    sensor_data = get_latest_sensor_data({"key": key})
+
+    # If no data is found for the given key, return an appropriate response
+    if sensor_data is None:
+        return jsonify({"error": "No data found for the given key"}), 404
+
+    # Extract required fields and return as JSON
+    response_data = {"data": sensor_data["data"], "date": sensor_data["date"]}
+    return jsonify(response_data), 200
 
 
-if __name__ == '__main__':
-    app.run(host='192.168.0.107')
+if __name__ == "__main__":
+    app.run()
