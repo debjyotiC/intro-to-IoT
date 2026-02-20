@@ -1,30 +1,25 @@
-import serial
-from time import sleep
-import numpy as np
+from serial import Serial
 import pandas as pd
 
+class espData:
+    def __init__(self, esp_port, esp_baud):
+        self.__sr = None
+        self.__esp_port = esp_port
+        self.__esp_baud = esp_baud
+        self.__esp_data_list, self.__esp_data_pos = [], []
 
-class ArduinoComm:
-    sensor_data = []  # list to store sensor data
-    count_arr = []  # count list
+    def initSerial(self):
+        self.__sr = Serial(self.__esp_port, self.__esp_baud)
 
-    def __init__(self, serialPort, baudRate):
-        self.serialPort = serialPort
-        self.baudRate = baudRate
+    def readSerial(self, num_data_points=10):
+        for i in range(num_data_points):
+            esp_data = float(self.__sr.readline().strip().decode())
+            self.__esp_data_list.append(esp_data)
+            self.__esp_data_pos.append(i)
+            print(f"Sensor data at pos {i}:", esp_data)
 
-    def connectWith(self, number, delay=1):
-        ser = serial.Serial(self.serialPort, self.baudRate)
-        for itr in range(0, number):
-            self.sensor_data.append(float(ser.read(7).decode().strip()))
-            self.count_arr.append(itr)
-            print('.', end='')
-            sleep(delay)
-        print('\n')
-
-    def calculateAverage(self):
-        return round(np.average(self.sensor_data), 2)
-
-    def writeCSV(self, fileName):
-        values = {"Count": self.count_arr, "Sensor_data": self.sensor_data}
-        df_w = pd.DataFrame(values, columns=["Count", "Sensor_data"])
-        df_w.to_csv(fileName, index=None, header=True)
+    def writeCSV(self, csv_file="esp_data.csv"):
+        data_frame = {"Count": self.__esp_data_pos, "Data": self.__esp_data_list}
+        df = pd.DataFrame(data_frame, index=None, columns=["Count", "Data"])
+        df.to_csv(csv_file)
+        print("Saved csv file!")
