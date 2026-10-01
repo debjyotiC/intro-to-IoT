@@ -3,7 +3,7 @@ import paho.mqtt.client as mqtt
 
 def on_connect(client, userdata, flags, rc):
     print("Connected with " + str(rc))
-    client.subscribe("test/topic")
+    client.subscribe("temp/sensor_0")
 
 
 def on_message(client, userdata, msg):
